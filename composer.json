@@ -1,0 +1,11 @@
+{
+    "name": "myweishanli/yii2-qqwry",
+    "description": "Yii2 纯真数据库查询以及升级",
+    "authors": [
+        {
+            "name": "Shanli Wei",
+            "email": "myweishanli@gmail.com"
+        }
+    ],
+    "require": {}
+}
