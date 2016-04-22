@@ -19,6 +19,18 @@ use yii\base\Model;
 class Location extends Model
 {
     /**
+     * @var string ip
+     */
+    public $ip;
+    /**
+     * @var string 开始ip
+     */
+    public $begin_ip;
+    /**
+     * @var string 结束ip
+     */
+    public $end_ip;
+    /**
      * @var string 国家
      */
     public $country;

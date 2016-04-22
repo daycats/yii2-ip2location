@@ -3,12 +3,15 @@
 ## 查下IP
 ```php
 $ip2Location = new Ip2Location();
-$locationModel = $ip2Location->query('8.8.8.8');
+$locationModel = $ip2Location->getLocation('8.8.8.8');
 print_r($locationModel->toArray());
 // Array
 // (
-//      [country] => 美国
-//      [area] => 加利福尼亚州圣克拉拉县山景市谷歌公司DNS服务器
+//     [ip] => 8.8.8.8
+//     [begin_ip] => 8.8.8.8
+//     [end_ip] => 8.8.8.8
+//     [country] => 美国
+//     [area] => 加利福尼亚州圣克拉拉县山景市谷歌公司DNS服务器
 // )
 ```
 
