@@ -2,13 +2,19 @@
 
 ## 查下IP
 ```php
-$qqwry = new IpLocation();
-print_r($qqwry->query('120.42.46.10'));
+$ip2Location = new Ip2Location();
+$locationModel = $ip2Location->query('8.8.8.8');
+print_r($locationModel->toArray());
+// Array
+// (
+//      [country] => 美国
+//      [area] => 加利福尼亚州圣克拉拉县山景市谷歌公司DNS服务器
+// )
 ```
 
 ## 升级数据库
 
 ```php
 $qqwry = new QQWry();
-var_dump($qqwry->upgrade());
+$qqwry->upgrade();
 ```

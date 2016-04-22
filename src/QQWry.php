@@ -34,7 +34,7 @@ class QQWry
      * 数据库升级
      *
      * @param string $savePath 数据库保存路径
-     * @return bool
+     * @return bool true 更新状态
      * @throws LocationException
      * @throws \yii\base\Exception
      */

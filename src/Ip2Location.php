@@ -58,7 +58,6 @@ class Ip2Location
         }
         $this->dbFileFp = fopen($this->file, 'rb');
         $this->startOffset = join('', unpack('L', $this->readOffset(4, 0)));
-        var_dump($this->startOffset);
         $this->endOffset = join('', unpack('L', $this->readOffset(4)));
         $this->total = ($this->endOffset - $this->startOffset) / 7 + 1;
     }
