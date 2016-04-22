@@ -35,7 +35,7 @@ class IpLocation
      */
     protected $lastIp;
     /**
-     * @var int IP记录的总条数（不包含版本信息记录）
+     * @var int IP 记录的总条数（不包含版本信息记录）
      */
     protected $totalIp;
 
