@@ -1,9 +1,9 @@
 # Yii2 QQWry
 
-## 查下IP
+## 根据IP查询
 ```php
-$ip2Location = new Ip2Location();
-$locationModel = $ip2Location->getLocation('8.8.8.8');
+$ipLocation = new IpLocation();
+$locationModel = $ipLocation->getLocation('8.8.8.8');
 print_r($locationModel->toArray());
 // Array
 // (
