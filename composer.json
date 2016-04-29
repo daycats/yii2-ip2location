@@ -1,11 +1,17 @@
 {
-    "name": "myweishanli/yii2-qqwry",
-    "description": "Yii2 纯真数据库查询以及升级",
+    "name": "myweishanli/yii2-ip2location",
+    "description": "Yii2 Ip to Location",
+    "type": "yii2-extension",
+    "license": "MIT",
     "authors": [
         {
             "name": "Shanli Wei",
             "email": "myweishanli@gmail.com"
         }
     ],
-    "require": {}
+    "minimum-stability": "beta",
+    "require": {
+        "php": ">=5.4.0",
+        "yiisoft/yii2": ">=2.0.6"
+    }
 }

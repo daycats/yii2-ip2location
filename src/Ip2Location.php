@@ -6,16 +6,15 @@
  * Time: 16:29
  */
 
-namespace wsl\qqwry;
+namespace wsl\ip2location;
 
-use wsl\qqwry\exceptions\LocationException;
-use wsl\qqwry\models\Location;
+use wsl\ip2location\models\Location;
 use Yii;
 
 /**
- * ip转地址
+ * IP 地理位置查询类
  *
- * @package wsl\qqwry
+ * @package wsl\ip2location
  */
 class Ip2Location
 {
@@ -24,142 +23,195 @@ class Ip2Location
      */
     public $encoding = 'UTF-8';
     /**
-     * @var bool|string 数据库路径
+     * @var resource QQWry.Dat文件指针
      */
-    protected $dbFilePath;
+    protected $fp;
     /**
-     * @var resource 数据库文件句柄
+     * @var int 第一条IP记录的偏移地址
      */
-    protected $dbFileFp;
+    protected $firstIp;
     /**
-     * @var int 索引开始偏移
+     * @var int 最后一条IP记录的偏移地址
      */
-    protected $startOffset;
+    protected $lastIp;
     /**
-     * @var int 索引接收偏移
+     * @var int IP 记录的总条数（不包含版本信息记录）
      */
-    protected $endOffset;
-    /**
-     * @var float 总长度
-     */
-    protected $total;
+    protected $totalIp;
 
     /**
-     * Ip2Location constructor.
+     * 构造函数，打开 QQWry.Dat 文件并初始化类中的信息
      *
-     * @param string $dbFilePath 数据库文件路径
-     * @throws LocationException
+     * @param string $filename 数据库文件路径
      */
-    public function __construct($dbFilePath = '@wsl/qqwry/data/qqwry.dat')
+    function __construct($filename = '@wsl/qqwry/../data/qqwry.dat')
     {
-        $this->file = Yii::getAlias($dbFilePath);
-        if (!file_exists($this->file) or !is_readable($this->file)) {
-            throw new LocationException($this->file . ' does not exist, or is not readable');
-        }
-        $this->dbFileFp = fopen($this->file, 'rb');
-        $this->startOffset = join('', unpack('L', $this->readOffset(4, 0)));
-        var_dump($this->startOffset);
-        $this->endOffset = join('', unpack('L', $this->readOffset(4)));
-        $this->total = ($this->endOffset - $this->startOffset) / 7 + 1;
-    }
-
-    public function __destruct()
-    {
-        if ($this->dbFileFp) {
-            fclose($this->dbFileFp);
+        $filename = Yii::getAlias($filename);
+        $this->fp = 0;
+        if (($this->fp = @fopen($filename, 'rb')) !== false) {
+            $this->firstIp = $this->getLong();
+            $this->lastIp = $this->getLong();
+            $this->totalIp = ($this->lastIp - $this->firstIp) / 7;
         }
     }
 
     /**
-     * 数值型IP转文本型IP
+     * 返回读取的长整型数
      *
-     * @param number $nip
+     * @return int
+     */
+    private function getLong()
+    {
+        //将读取的little-endian编码的4个字节转化为长整型数
+        $result = unpack('Vlong', fread($this->fp, 4));
+        return $result['long'];
+    }
+
+    /**
+     * 返回读取的3个字节的长整型数
+     *
+     * @return int
+     */
+    private function getLong3()
+    {
+        //将读取的little-endian编码的3个字节转化为长整型数
+        $result = unpack('Vlong', fread($this->fp, 3) . chr(0));
+        return $result['long'];
+    }
+
+    /**
+     * 返回压缩后可进行比较的IP地址
+     *
+     * @param string $ip
      * @return string
      */
-    public function ntoa($nip)
+    private function packIp($ip)
     {
-        $ip = [];
-        for ($i = 3; $i > 0; $i--) {
-            $ip_seg = intval($nip / pow(256, $i));
-            $ip[] = $ip_seg;
-            $nip -= $ip_seg * pow(256, $i);
-        }
-        $ip[] = $nip;
-
-        return join('.', $ip);
+        // 将IP地址转化为长整型数，如果在PHP5中，IP地址错误，则返回False，
+        // 这时intval将Flase转化为整数-1，之后压缩成big-endian编码的字符串
+        return pack('N', intval(ip2long($ip)));
     }
 
     /**
-     * IP查询
+     * 返回读取的字符串
      *
-     * @param string $ip 要查下的IP
-     * @throws LocationException
-     * @return Location
+     * @param string $data
+     * @return string
      */
-    public function query($ip)
+    private function getString($data = '')
     {
-        $ipSplit = explode('.', $ip);
-        if (count($ipSplit) !== 4) {
-            throw new LocationException($ip . ' is not a valid ip address');
+        $char = fread($this->fp, 1);
+        while (ord($char) > 0) { // 字符串按照C格式保存，以结束
+            $data .= $char; // 将读取的字符连接到给定字符串之后
+            $char = fread($this->fp, 1);
         }
-        foreach ($ipSplit as $v) {
-            if ($v > 255) {
-                throw new LocationException($ip . ' is not a valid ip address');
+        return $data;
+    }
+
+    /**
+     * 返回地区信息
+     *
+     * @return string
+     */
+    private function getArea()
+    {
+        $byte = fread($this->fp, 1); // 标志字节
+        switch (ord($byte)) {
+            case 0: // 没有区域信息
+                $area = '';
+                break;
+            case 1:
+            case 2: // 标志字节为1或2，表示区域信息被重定向
+                fseek($this->fp, $this->getLong3());
+                $area = $this->getString();
+                break;
+            default: // 否则，表示区域信息没有被重定向
+                $area = $this->getString($byte);
+                break;
+        }
+        return $area;
+    }
+
+    /**
+     * 根据所给 IP 地址或域名返回所在地区信息
+     *
+     * @param string $ip 查询的ip
+     * @return null|Location
+     */
+    public function getLocation($ip)
+    {
+        if (!$this->fp) return null; // 如果数据文件没有被正确打开，则直接返回空
+        $location['ip'] = gethostbyname($ip); // 将输入的域名转化为IP地址
+        $ip = $this->packIp($location['ip']); // 将输入的IP地址转化为可比较的IP地址
+        // 不合法的IP地址会被转化为255.255.255.255
+        // 对分搜索
+        $l = 0; // 搜索的下边界
+        $u = $this->totalIp; // 搜索的上边界
+        $findip = $this->lastIp; // 如果没有找到就返回最后一条IP记录（QQWry.Dat的版本信息）
+
+        while ($l <= $u) { // 当上边界小于下边界时，查找失败
+            $i = floor(($l + $u) / 2); // 计算近似中间记录
+            fseek($this->fp, $this->firstIp + $i * 7);
+            $beginip = strrev(fread($this->fp, 4)); // 获取中间记录的开始IP地址
+            // strrev函数在这里的作用是将little-endian的压缩IP地址转化为big-endian的格式
+            // 以便用于比较，后面相同。
+            if ($ip < $beginip) { // 用户的IP小于中间记录的开始IP地址时
+                $u = $i - 1; // 将搜索的上边界修改为中间记录减一
+            } else {
+                fseek($this->fp, $this->getLong3());
+                $endip = strrev(fread($this->fp, 4)); // 获取中间记录的结束IP地址
+                if ($ip > $endip) { // 用户的IP大于中间记录的结束IP地址时
+                    $l = $i + 1; // 将搜索的下边界修改为中间记录加一
+                } else { // 用户的IP在中间记录的IP范围内时
+                    $findip = $this->firstIp + $i * 7;
+                    break; // 则表示找到结果，退出循环
+                }
             }
         }
-        $ipNum = $ipSplit[0] * (256 * 256 * 256) + $ipSplit[1] * (256 * 256) + $ipSplit[2] * 256 + $ipSplit[3];
-        $ipFind = $this->find($ipNum, 0, $this->total);
-        $ipOffset = $this->startOffset + $ipFind * 7 + 4;
-        $ipRecordOffset = $this->readOffset(3, $ipOffset);
-        $ipRecordOffset = join('', unpack('L', $ipRecordOffset . chr(0)));
 
-        return $this->readRecord($ipRecordOffset);
-    }
+        //获取查找到的IP地理位置信息
+        fseek($this->fp, $findip);
+        $location['begin_ip'] = long2ip($this->getLong()); // 用户IP所在范围的开始地址
+        $offset = $this->getLong3();
+        fseek($this->fp, $offset);
+        $location['end_ip'] = long2ip($this->getLong()); // 用户IP所在范围的结束地址
+        $byte = fread($this->fp, 1); // 标志字节
 
-    /**
-     * 读取记录
-     *
-     * @param int $offset 偏移量
-     * @return Location
-     */
-    protected function readRecord($offset)
-    {
-        $offset = $offset + 4;
-        $flag = ord($this->readOffset(1, $offset));
-
-        $locationModel = new Location();
-
-        switch ($flag) {
-            case 1:
-                $locationOffset = $this->readOffset(3, $offset + 1);
-                $locationOffset = join('', unpack('L', $locationOffset . chr(0)));
-
-                $subFlag = ord($this->readOffset(1, $locationOffset));
-
-                if ($subFlag == 2) {
-                    // 国家
-                    $countryOffset = $this->readOffset(3, $locationOffset + 1);
-                    $countryOffset = join('', unpack('L', $countryOffset . chr(0)));
-                    $locationModel->country = $this->readLocation($countryOffset);
-                    $locationModel->area = $this->readLocation($locationOffset + 4); // 地区
-                } else {
-                    $locationModel->country = $this->readLocation($locationOffset);
-                    $locationModel->area = $this->readLocation($locationOffset + strlen($locationModel->country) + 1);
+        switch (ord($byte)) {
+            case 1: // 标志字节为1，表示国家和区域信息都被同时重定向
+                $countryOffset = $this->getLong3(); // 重定向地址
+                fseek($this->fp, $countryOffset);
+                $byte = fread($this->fp, 1); // 标志字节
+                switch (ord($byte)) {
+                    case 2: // 标志字节为2，表示国家信息又被重定向
+                        fseek($this->fp, $this->getLong3());
+                        $location['country'] = $this->getString();
+                        fseek($this->fp, $countryOffset + 4);
+                        $location['area'] = $this->getArea();
+                        break;
+                    default: // 否则，表示国家信息没有被重定向
+                        $location['country'] = $this->getString($byte);
+                        $location['area'] = $this->getArea();
+                        break;
                 }
                 break;
-            case 2:
-                // 地区
-                // offset + 1(flag) + 3(country offset)
-                $locationModel->area = $this->readLocation($offset + 4);
-
-                // offset + 1(flag)
-                $countryOffset = $this->readOffset(3, $offset + 1);
-                $countryOffset = join('', unpack('L', $countryOffset . chr(0)));
-                $locationModel->country = $this->readLocation($countryOffset);
+            case 2: // 标志字节为2，表示国家信息被重定向
+                fseek($this->fp, $this->getLong3());
+                $location['country'] = $this->getString();
+                fseek($this->fp, $offset + 8);
+                $location['area'] = $this->getArea();
                 break;
-            default:
-                $locationModel->country = $this->readLocation($offset);
-                $locationModel->area = $this->readLocation($offset + strlen($locationModel->country) + 1);
+            default: // 否则，表示国家信息没有被重定向
+                $location['country'] = $this->getString($byte);
+                $location['area'] = $this->getArea();
+                break;
+        }
+
+        if ($location['country'] == ' CZ88.NET') { // CZ88.NET表示没有有效信息
+            $location['country'] = '未知';
+        }
+        if ($location['area'] == ' CZ88.NET') {
+            $location['area'] = '';
         }
 
         // 转换编码并去除无信息时显示的CZ88.NET
@@ -170,86 +222,20 @@ class Ip2Location
                 $item = iconv('GBK', $this->encoding . '//IGNORE', $item);
             }
             return preg_replace('/\s*cz88\.net\s*/i', '', $item);
-        }, $locationModel->toArray());
-        $locationModel->setAttributes($location, false);
+        }, $location);
 
-        return $locationModel;
+        return new Location($location);
     }
 
     /**
-     * 读取地区
+     * 析构函数，用于在页面执行结束后自动关闭打开的文件。
      *
-     * @param int $offset 偏移
-     * @return string
      */
-    protected function readLocation($offset)
+    function __desctruct()
     {
-        if ($offset == 0) {
-            return '';
+        if ($this->fp) {
+            fclose($this->fp);
         }
-
-        $flag = ord($this->readOffset(1, $offset));
-
-        // 出错
-        if ($flag == 0) {
-            return '';
-        }
-
-        // 仍然为重定向
-        if ($flag == 2) {
-            $offset = $this->readOffset(3, $offset + 1);
-            $offset = join('', unpack('L', $offset . chr(0)));
-            return $this->readLocation($offset);
-        }
-
-        $location = '';
-        $chr = $this->readOffset(1, $offset);
-        while (ord($chr) != 0) {
-            $location .= $chr;
-            $offset++;
-            $chr = $this->readOffset(1, $offset);
-        }
-
-        return $location;
-    }
-
-    /**
-     * 查找 ip 所在的索引
-     *
-     * @param int $ipLong
-     * @param int $l
-     * @param int $r
-     * @return mixed
-     */
-    protected function find($ipLong, $l, $r)
-    {
-        if ($l + 1 >= $r) {
-            return $l;
-        }
-        $m = intval(($l + $r) / 2);
-
-        $find = $this->readOffset(4, $this->startOffset + $m * 7);
-        $mIp = join('', unpack('L', $find));
-
-        if ($ipLong < $mIp) {
-            return $this->find($ipLong, $l, $m);
-        } else {
-            return $this->find($ipLong, $m, $r);
-        }
-    }
-
-    /**
-     * 读取
-     *
-     * @param int $length 读取长度
-     * @param null|int $offset 偏移
-     * @return int
-     */
-    protected function readOffset($length, $offset = null)
-    {
-        if (!is_null($offset)) {
-            fseek($this->dbFileFp, $offset);
-        }
-        return fread($this->dbFileFp, $length);
+        $this->fp = 0;
     }
 }

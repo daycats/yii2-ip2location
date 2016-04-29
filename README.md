@@ -1,14 +1,23 @@
 # Yii2 QQWry
 
-## 查下IP
+## 根据IP查询
 ```php
-$qqwry = new IpLocation();
-print_r($qqwry->query('120.42.46.10'));
+$ipLocation = new IpLocation();
+$locationModel = $ipLocation->getLocation('8.8.8.8');
+print_r($locationModel->toArray());
+// Array
+// (
+//     [ip] => 8.8.8.8
+//     [begin_ip] => 8.8.8.8
+//     [end_ip] => 8.8.8.8
+//     [country] => 美国
+//     [area] => 加利福尼亚州圣克拉拉县山景市谷歌公司DNS服务器
+// )
 ```
 
 ## 升级数据库
 
 ```php
 $qqwry = new QQWry();
-var_dump($qqwry->upgrade());
+$qqwry->upgrade();
 ```

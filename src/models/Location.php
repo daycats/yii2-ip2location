@@ -6,7 +6,7 @@
  * Time: 16:43
  */
 
-namespace wsl\qqwry\models;
+namespace wsl\ip2location\models;
 
 
 use yii\base\Model;
@@ -14,10 +14,22 @@ use yii\base\Model;
 /**
  * 位置数据模型
  *
- * @package wsl\qqwry\models
+ * @package wsl\ip2location\models
  */
 class Location extends Model
 {
+    /**
+     * @var string IP
+     */
+    public $ip;
+    /**
+     * @var string 开始 IP
+     */
+    public $begin_ip;
+    /**
+     * @var string 结束 IP
+     */
+    public $end_ip;
     /**
      * @var string 国家
      */

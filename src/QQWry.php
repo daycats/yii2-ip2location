@@ -6,10 +6,10 @@
  * Time: 17:08
  */
 
-namespace wsl\qqwry;
+namespace wsl\ip2location;
 
 
-use wsl\qqwry\exceptions\LocationException;
+use wsl\ip2location\exceptions\LocationException;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
@@ -17,7 +17,7 @@ use yii\helpers\FileHelper;
 /**
  * 纯真数据库操作类
  *
- * @package wsl\qqwry
+ * @package wsl\ip2location
  */
 class QQWry
 {
@@ -34,11 +34,11 @@ class QQWry
      * 数据库升级
      *
      * @param string $savePath 数据库保存路径
-     * @return bool
+     * @return bool true 更新状态
      * @throws LocationException
      * @throws \yii\base\Exception
      */
-    public function upgrade($savePath = '@wsl/qqwry/data/qqwry.dat')
+    public function upgrade($savePath = '@wsl/qqwry/../data/qqwry.dat')
     {
         $savePath = Yii::getAlias($savePath);
         if (!FileHelper::createDirectory(dirname($savePath), 0777)) {

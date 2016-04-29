@@ -6,7 +6,7 @@
  * Time: 16:30
  */
 
-namespace wsl\qqwry\exceptions;
+namespace wsl\ip2location\exceptions;
 
 
 class LocationException extends \Exception
