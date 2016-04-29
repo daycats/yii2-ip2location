@@ -2,7 +2,9 @@
 
 ## 根据IP查询
 ```php
-$ipLocation = new IpLocation();
+use \wsl\ip2location\Ip2Location;
+
+$ipLocation = new Ip2Location();
 $locationModel = $ipLocation->getLocation('8.8.8.8');
 print_r($locationModel->toArray());
 // Array

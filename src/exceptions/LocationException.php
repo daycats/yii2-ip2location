@@ -8,7 +8,6 @@
 
 namespace wsl\ip2location\exceptions;
 
-
 class LocationException extends \Exception
 {
 

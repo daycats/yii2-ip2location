@@ -44,7 +44,7 @@ class Ip2Location
      *
      * @param string $filename 数据库文件路径
      */
-    function __construct($filename = '@wsl/qqwry/../data/qqwry.dat')
+    function __construct($filename = '@wsl/ip2location/../data/qqwry.dat')
     {
         $filename = Yii::getAlias($filename);
         $this->fp = 0;
