@@ -37,7 +37,7 @@ class QQWry
      * @throws LocationException
      * @throws \yii\base\Exception
      */
-    public function upgrade($savePath = '@wsl/qqwry/../data/qqwry.dat')
+    public function upgrade($savePath = '@wsl/ip2location/../data/qqwry.dat')
     {
         $savePath = Yii::getAlias($savePath);
         if (!FileHelper::createDirectory(dirname($savePath), 0777)) {
