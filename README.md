@@ -1,4 +1,20 @@
-# Yii2 QQWry
+# Yii2 Ip to Location
+
+## 安装
+
+安装这个扩展的首选方式是通过 [composer](http://getcomposer.org/download/).
+
+执行
+
+```bash
+composer require --prefer-dist myweishanli/yii2-ip2location
+```
+
+或添加
+
+```
+"myweishanli/yii2-ip2location": "~1.0.0"
+```
 
 ## 根据IP查询
 ```php
@@ -20,6 +36,8 @@ print_r($locationModel->toArray());
 ## 升级数据库
 
 ```php
+use \wsl\ip2location\QQWry;
+
 $qqwry = new QQWry();
 $qqwry->upgrade();
 ```

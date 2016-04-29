@@ -6,17 +6,9 @@
  * Time: 17:08
  */
 
-<<<<<<< HEAD
 namespace wsl\ip2location;
 
-
 use wsl\ip2location\exceptions\LocationException;
-=======
-namespace wsl\qqwry;
-
-
-use wsl\qqwry\exceptions\LocationException;
->>>>>>> be301d5970832db448e3c442333f7403abefb5f9
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
@@ -24,11 +16,7 @@ use yii\helpers\FileHelper;
 /**
  * 纯真数据库操作类
  *
-<<<<<<< HEAD
  * @package wsl\ip2location
-=======
- * @package wsl\qqwry
->>>>>>> be301d5970832db448e3c442333f7403abefb5f9
  */
 class QQWry
 {
