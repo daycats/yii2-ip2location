@@ -9,7 +9,11 @@
             "email": "myweishanli@gmail.com"
         }
     ],
-    "minimum-stability": "beta",
+    "autoload": {
+        "psr-4": {
+            "wsl\\ip2location\\": "src/"
+        }
+    },
     "require": {
         "php": ">=5.4.0",
         "yiisoft/yii2": ">=2.0.6"
