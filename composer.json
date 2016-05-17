@@ -9,6 +9,7 @@
             "email": "myweishanli@gmail.com"
         }
     ],
+    "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
             "wsl\\ip2location\\": "src/"
